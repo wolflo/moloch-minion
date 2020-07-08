@@ -4,7 +4,8 @@ import "./moloch/Moloch.sol";
 
 contract Minion {
 
-    string public constant MINION_ACTION_DETAILS = '{"isMinion": true, "title":"MINION", "description":"';
+    // string public constant MINION_ACTION_DETAILS = '{"isMinion": true, "title":"MINION", "description":"';
+    bytes public constant MINION_ACTION_DETAILS = hex'7b2269734d696e696f6e223a20747275652c20227469746c65223a224d494e494f4e222c20226465736372697074696f6e223a22';
 
     Moloch public moloch;
     address public molochApprovedToken;
@@ -35,7 +36,7 @@ contract Minion {
         address _actionTo,
         uint256 _actionValue,
         bytes memory _actionData,
-        string memory _description
+        bytes memory _description
     )
         public
         returns (uint256)
@@ -44,7 +45,8 @@ contract Minion {
         // the proposal without getting the proposal struct from the moloch
         require(_actionTo != address(0), "Minion::invalid _actionTo");
 
-        string memory details = string(abi.encodePacked(MINION_ACTION_DETAILS, _description, '"}'));
+        // string memory details = string(abi.encodePacked(MINION_ACTION_DETAILS, _description, '"}'));
+        bytes memory details = abi.encodePacked(MINION_ACTION_DETAILS, _description, hex'227d');
 
         uint256 proposalId = moloch.submitProposal(
             address(this),
