@@ -15,7 +15,7 @@ function encodeDetailsString(actionDescription: string) {
 async function incProposalCount(moloch: Moloch, n: number) {
   const token = await moloch.depositToken();
   for (let i = 0; i < n; i++) {
-    await moloch.submitProposal(moloch.address, 0, 0, 0, token, 0, token, "");
+    await moloch.submitProposal(moloch.address, 0, 0, 0, token, 0, token, "0x");
   }
 }
 
@@ -40,12 +40,20 @@ async function passProposal(moloch: Moloch, action: Action) {
   await moloch.processProposal(action.queueIndex);
 }
 
+function utf8ToBytes(str: string) {
+  return ethers.utils.hexlify(ethers.utils.toUtf8Bytes(str));
+}
+
+function bytesToUtf8(bytes: string) {
+  return ethers.utils.toUtf8String(bytes);
+}
+
 async function proposeAndPass(minion: Minion, moloch: Moloch, action: Action) {
   await minion.proposeAction(
     action.to,
     action.value,
     action.data,
-    action.description
+    utf8ToBytes(action.description)
   );
   await passProposal(moloch, action);
 }
@@ -55,5 +63,7 @@ export default {
   passProposal,
   proposeAndPass,
   incProposalCount,
-  encodeDetailsString
+  encodeDetailsString,
+  utf8ToBytes,
+  bytesToUtf8
 };

@@ -63,9 +63,9 @@ describe("Minion integration", () => {
     expect(minion.address).to.not.eq(Constants.AddressZero);
     expect(await minion.moloch()).to.eq(moloch.address);
     expect(await minion.molochApprovedToken()).to.eq(token.address);
-    expect(await minion.MINION_ACTION_DETAILS()).to.eq(
-      Constants.MINION_ACTION_DETAILS
-    );
+
+    const details = Utils.bytesToUtf8(await minion.MINION_ACTION_DETAILS());
+    expect(details).to.eq(Constants.MINION_ACTION_DETAILS);
   });
 
   describe("proposeAction", () => {
@@ -79,6 +79,7 @@ describe("Minion integration", () => {
           value: ethers.utils.parseEther("1"),
           data: ethers.utils.hexlify(ethers.utils.randomBytes(50)),
           description: "foo",
+          /* description: ethers.utils.hexlify(ethers.utils.toUtf8Bytes("foo")), */
           proposalId: 0,
           queueIndex: 0
         };
@@ -93,11 +94,13 @@ describe("Minion integration", () => {
           paymentToken: token.address,
           details: Utils.encodeDetailsString(action.description)
         };
+        /* const deets = ethers.utils.hexlify(ethers.utils.toUtf8Bytes(action.description)) */
+        /* console.log("hex foo", deets); */
         await minion.proposeAction(
           action.to,
           action.value,
           action.data,
-          action.description
+          Utils.utf8ToBytes(action.description)
         );
       });
 
@@ -134,7 +137,9 @@ describe("Minion integration", () => {
           proposal.paymentRequested
         );
         expect(storedProposal.paymentToken).to.equal(proposal.paymentToken);
-        expect(storedProposal.details).to.equal(proposal.details);
+
+        const details = Utils.bytesToUtf8(storedProposal.details);
+        expect(details).to.equal(proposal.details);
       });
 
       it("emits expected events", async () => {
@@ -144,7 +149,7 @@ describe("Minion integration", () => {
             action.to,
             action.value,
             action.data,
-            action.description
+            Utils.utf8ToBytes(action.description)
           )
         )
           .to.emit(minion, "ActionProposed")
@@ -158,7 +163,7 @@ describe("Minion integration", () => {
             proposal.tributeToken,
             proposal.paymentRequested,
             proposal.paymentToken,
-            proposal.details,
+            Utils.utf8ToBytes(proposal.details),
             [false, false, false, false, false],
             proposalId,
             minion.address,
@@ -180,7 +185,7 @@ describe("Minion integration", () => {
             badAction.to,
             badAction.value,
             badAction.data,
-            badAction.description
+            Utils.utf8ToBytes(badAction.description)
           )
         ).to.be.revertedWith(Constants.revertStrings.INVALID_PROP_TARGET);
       });
@@ -204,7 +209,7 @@ describe("Minion integration", () => {
             action.to,
             action.value,
             action.data,
-            action.description
+            Utils.utf8ToBytes(action.description)
           )
         ).to.be.revertedWith(Constants.revertStrings.none);
       });
@@ -354,7 +359,7 @@ describe("Minion integration", () => {
           unpassedAction.to,
           unpassedAction.value,
           unpassedAction.data,
-          unpassedAction.description
+          Utils.utf8ToBytes(unpassedAction.description)
         );
         await Utils.proposeAndPass(minion, moloch, valueAction);
         await Utils.proposeAndPass(minion, moloch, actionToMoloch);
@@ -399,7 +404,7 @@ describe("Minion integration", () => {
           token.address,
           0,
           token.address,
-          ""
+          "0x"
         );
         const proposalId = (await moloch.proposalCount()).sub(1).toNumber();
         const falseAction: Action = {
@@ -439,7 +444,7 @@ describe("Minion integration", () => {
         token.address,
         0,
         token.address,
-        ""
+        "0x"
       );
       // pay minion
       await moloch.submitProposal(
@@ -450,7 +455,7 @@ describe("Minion integration", () => {
         token.address,
         amount,
         token.address,
-        ""
+        "0x"
       );
 
       // pass and process both proposals
